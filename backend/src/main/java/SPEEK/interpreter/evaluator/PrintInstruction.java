@@ -1,6 +1,6 @@
-package evaluator;
+package SPEEK.interpreter.evaluator;
 
-import parser.Expression;
+import SPEEK.interpreter.parser.Expression;
 
 /*
  * Handles printing values

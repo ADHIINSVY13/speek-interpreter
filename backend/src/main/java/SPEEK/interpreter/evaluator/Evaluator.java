@@ -1,4 +1,4 @@
-package evaluator;
+package SPEEK.interpreter.evaluator;
 
 import java.util.List;
 

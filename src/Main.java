@@ -15,12 +15,14 @@ public class Main {
 
         try {
             // Read full file as a single program
-            String input = Files.readString(Paths.get(fileName));
+            String input = Files.readString(Paths.get(fileName))
+                    .replace("\r\n", "\n")
+                    .replace("\r", "\n");
 
             // Execute entire program at once
             Interpreter interpreter = new Interpreter(input);
-            interpreter.execute();
-
+            String output = interpreter.execute();
+            System.out.println(output);
         } catch (IOException e) {
             System.err.println("File Error: " + e.getMessage());
         } catch (Exception e) {

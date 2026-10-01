@@ -15,18 +15,40 @@ function App() {
   const [activeTab, setActiveTab] = useState("output");
   const [isRunning, setIsRunning] = useState(false);
 
-  const runCode = () => {
+  // =========================
+  // RUN SPEEK PROGRAM
+  // =========================
+  const runCode = async () => {
     setIsRunning(true);
+    setOutput("Running...");
 
-    // Temporary result.
-    // Later this will call your Java interpreter.
-    setTimeout(() => {
-      setOutput("30");
+    try {
+      const response = await fetch("http://localhost:8080/api/execute", {
+        method: "POST",
+        headers: {
+          "Content-Type": "text/plain",
+        },
+        body: code,
+      });
+
+      if (!response.ok) {
+        throw new Error(`Backend returned ${response.status}`);
+      }
+
+      const result = await response.text();
+
+      setOutput(result);
+    } catch (error) {
+      console.error(error);
+      setOutput("Error: Could not connect to SPEEK backend.");
+    } finally {
       setIsRunning(false);
-      setActiveTab("output");
-    }, 500);
+    }
   };
 
+  // =========================
+  // RESET CODE
+  // =========================
   const resetCode = () => {
     setCode(defaultCode);
     setOutput("");
@@ -35,16 +57,20 @@ function App() {
   return (
     <div className="app">
 
-      {/* HEADER */}
+      {/* ================= HEADER ================= */}
       <header className="header">
 
         <div className="brand">
-          <div className="brand-icon">S</div>
+
+          <div className="brand-icon">
+            S
+          </div>
 
           <div>
             <h1>SPEEK</h1>
             <span>Programming Language</span>
           </div>
+
         </div>
 
         <div className="header-actions">
@@ -64,9 +90,14 @@ function App() {
             onClick={runCode}
             disabled={isRunning}
           >
-            <Play size={17} fill="currentColor" />
+
+            <Play
+              size={17}
+              fill="currentColor"
+            />
 
             {isRunning ? "Running..." : "Run"}
+
           </button>
 
         </div>
@@ -74,28 +105,35 @@ function App() {
       </header>
 
 
-      {/* MAIN WORKSPACE */}
+      {/* ================= MAIN WORKSPACE ================= */}
       <main className="workspace">
 
-        {/* EDITOR */}
+        {/* ================= EDITOR ================= */}
         <section className="editor-section">
 
           <div className="panel-header">
 
             <div className="file-name">
+
               <span className="file-dot"></span>
+
               main.speek
+
             </div>
 
             <button
               className="reset-button"
               onClick={resetCode}
             >
+
               <RotateCcw size={15} />
+
               Reset
+
             </button>
 
           </div>
+
 
           <div className="editor-container">
 
@@ -103,8 +141,13 @@ function App() {
               height="100%"
               defaultLanguage="plaintext"
               theme="vs-dark"
+
               value={code}
-              onChange={(value) => setCode(value || "")}
+
+              onChange={(value) =>
+                setCode(value || "")
+              }
+
               options={{
                 fontSize: 15,
 
@@ -118,8 +161,11 @@ function App() {
                 },
 
                 lineNumbers: "on",
+
                 wordWrap: "on",
+
                 scrollBeyondLastLine: false,
+
                 automaticLayout: true,
               }}
             />
@@ -129,34 +175,48 @@ function App() {
         </section>
 
 
-        {/* CONSOLE */}
+        {/* ================= CONSOLE ================= */}
         <section className="output-section">
 
           <div className="panel-header">
 
-            <span>Console</span>
+            <span>
+              Console
+            </span>
 
             <span className="status">
+
               <span className="status-dot"></span>
-              Ready
+
+              {isRunning ? "Running" : "Ready"}
+
             </span>
 
           </div>
+
 
           <div className="console">
 
             {output ? (
 
               <>
+
                 <div className="console-label">
                   OUTPUT
                 </div>
 
                 <pre>{output}</pre>
 
-                <div className="success-message">
-                  ✓ Program executed successfully
-                </div>
+                {!isRunning &&
+                  !output.startsWith("Error:") &&
+                  output !== "Running..." && (
+
+                    <div className="success-message">
+                      ✓ Program executed successfully
+                    </div>
+
+                  )}
+
               </>
 
             ) : (
@@ -167,7 +227,9 @@ function App() {
                   &gt;_
                 </div>
 
-                <h3>No output yet</h3>
+                <h3>
+                  No output yet
+                </h3>
 
                 <p>
                   Write a SPEEK program and click Run
@@ -185,7 +247,7 @@ function App() {
       </main>
 
 
-      {/* BOTTOM PANEL */}
+      {/* ================= BOTTOM PANEL ================= */}
       <section className="bottom-panel">
 
         <div className="tabs">
@@ -201,11 +263,17 @@ function App() {
             <button
               key={tab}
               className={`tab ${
-                activeTab === tab ? "active" : ""
+                activeTab === tab
+                  ? "active"
+                  : ""
               }`}
-              onClick={() => setActiveTab(tab)}
+              onClick={() =>
+                setActiveTab(tab)
+              }
             >
+
               {tab.toUpperCase()}
+
             </button>
 
           ))}
@@ -215,35 +283,85 @@ function App() {
 
         <div className="tab-content">
 
+
+          {/* ================= OUTPUT TAB ================= */}
+
           {activeTab === "output" && (
-            <div className="tab-placeholder">
-              Program output will appear here.
+
+            <div className="tab-output">
+
+              {output ? (
+
+                <pre>{output}</pre>
+
+              ) : (
+
+                <div className="tab-placeholder">
+                  Program output will appear here.
+                </div>
+
+              )}
+
             </div>
+
           )}
 
+
+          {/* ================= TOKENS TAB ================= */}
 
           {activeTab === "tokens" && (
 
             <div className="token-table">
 
               <div className="table-header">
-                <span>TYPE</span>
-                <span>VALUE</span>
+
+                <span>
+                  TYPE
+                </span>
+
+                <span>
+                  VALUE
+                </span>
+
               </div>
 
-              <div className="table-row">
-                <span>LET</span>
-                <span>let</span>
-              </div>
 
               <div className="table-row">
-                <span>IDENTIFIER</span>
-                <span>x</span>
+
+                <span>
+                  LET
+                </span>
+
+                <span>
+                  let
+                </span>
+
               </div>
 
+
               <div className="table-row">
-                <span>NUMBER</span>
-                <span>10</span>
+
+                <span>
+                  IDENTIFIER
+                </span>
+
+                <span>
+                  x
+                </span>
+
+              </div>
+
+
+              <div className="table-row">
+
+                <span>
+                  NUMBER
+                </span>
+
+                <span>
+                  10
+                </span>
+
               </div>
 
             </div>
@@ -251,11 +369,15 @@ function App() {
           )}
 
 
+          {/* ================= AST TAB ================= */}
+
           {activeTab === "ast" && (
 
             <div className="tree">
 
-              <div>Program</div>
+              <div>
+                Program
+              </div>
 
               <div className="tree-child">
                 ├── Assignment
@@ -278,18 +400,35 @@ function App() {
           )}
 
 
+          {/* ================= ENVIRONMENT TAB ================= */}
+
           {activeTab === "environment" && (
 
             <div className="environment">
 
               <div className="env-item">
-                <span>x</span>
-                <span>10</span>
+
+                <span>
+                  x
+                </span>
+
+                <span>
+                  10
+                </span>
+
               </div>
 
+
               <div className="env-item">
-                <span>y</span>
-                <span>20</span>
+
+                <span>
+                  y
+                </span>
+
+                <span>
+                  20
+                </span>
+
               </div>
 
             </div>
@@ -297,10 +436,14 @@ function App() {
           )}
 
 
+          {/* ================= ERRORS TAB ================= */}
+
           {activeTab === "errors" && (
 
             <div className="no-errors">
+
               ✓ No errors detected
+
             </div>
 
           )}

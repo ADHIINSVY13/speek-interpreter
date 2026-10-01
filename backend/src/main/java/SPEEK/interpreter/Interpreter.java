@@ -1,8 +1,10 @@
-import tokenizer.Tokenizer;
-import tokenizer.Token;
-import parser.Parser;
-import evaluator.Evaluator;
-import evaluator.Instruction;
+package SPEEK.interpreter;
+
+import SPEEK.interpreter.tokenizer.Tokenizer;
+import SPEEK.interpreter.tokenizer.Token;
+import SPEEK.interpreter.parser.Parser;
+import SPEEK.interpreter.evaluator.Evaluator;
+import SPEEK.interpreter.evaluator.Instruction;
 
 import java.util.List;
 
