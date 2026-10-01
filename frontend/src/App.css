@@ -1,0 +1,543 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: #0b0d12;
+  color: #e7e9ee;
+  font-family:
+    Inter,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+}
+
+button {
+  font-family: inherit;
+}
+
+.app {
+  min-height: 100vh;
+
+  background:
+    radial-gradient(
+      circle at 20% 0%,
+      rgba(110, 85, 255, 0.12),
+      transparent 30%
+    ),
+    #0b0d12;
+}
+
+
+/* HEADER */
+
+.header {
+  height: 68px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 0 24px;
+
+  border-bottom: 1px solid #20232b;
+
+  background: rgba(12, 14, 20, 0.92);
+
+  backdrop-filter: blur(12px);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+
+  gap: 11px;
+}
+
+.brand-icon {
+  width: 36px;
+  height: 36px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 10px;
+
+  background: linear-gradient(
+    135deg,
+    #7c5cff,
+    #5c8dff
+  );
+
+  font-weight: 800;
+  font-size: 18px;
+}
+
+.brand h1 {
+  margin: 0;
+
+  font-size: 16px;
+  letter-spacing: 1px;
+}
+
+.brand span {
+  display: block;
+
+  margin-top: 2px;
+
+  color: #777d8c;
+
+  font-size: 11px;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+
+  gap: 8px;
+}
+
+.header-button,
+.run-button,
+.reset-button {
+  display: flex;
+  align-items: center;
+
+  gap: 7px;
+
+  border: 0;
+
+  cursor: pointer;
+}
+
+.header-button {
+  padding: 9px 13px;
+
+  color: #9ca2b1;
+
+  background: transparent;
+
+  border-radius: 7px;
+}
+
+.header-button:hover {
+  background: #181b23;
+  color: #ffffff;
+}
+
+.run-button {
+  padding: 9px 17px;
+
+  color: white;
+
+  background: #6957e8;
+
+  border-radius: 7px;
+
+  font-weight: 600;
+}
+
+.run-button:hover {
+  background: #7968f0;
+}
+
+.run-button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+
+/* WORKSPACE */
+
+.workspace {
+  height: calc(100vh - 68px - 190px);
+
+  min-height: 500px;
+
+  display: grid;
+
+  grid-template-columns: 1fr 0.85fr;
+
+  border-bottom: 1px solid #20232b;
+}
+
+.editor-section,
+.output-section {
+  min-width: 0;
+
+  display: flex;
+  flex-direction: column;
+}
+
+.editor-section {
+  border-right: 1px solid #20232b;
+}
+
+
+/* PANEL HEADER */
+
+.panel-header {
+  height: 45px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 0 15px;
+
+  border-bottom: 1px solid #20232b;
+
+  background: #101218;
+
+  color: #a4a9b7;
+
+  font-size: 12px;
+}
+
+.file-name {
+  display: flex;
+  align-items: center;
+
+  gap: 8px;
+}
+
+.file-dot {
+  width: 7px;
+  height: 7px;
+
+  border-radius: 50%;
+
+  background: #6d5ce7;
+}
+
+.reset-button {
+  padding: 5px 8px;
+
+  color: #777d8c;
+
+  background: transparent;
+
+  border-radius: 5px;
+}
+
+.reset-button:hover {
+  color: white;
+  background: #1b1e26;
+}
+
+.status {
+  display: flex;
+  align-items: center;
+
+  gap: 6px;
+
+  color: #777d8c;
+}
+
+.status-dot {
+  width: 6px;
+  height: 6px;
+
+  border-radius: 50%;
+
+  background: #53c878;
+}
+
+
+/* EDITOR */
+
+.editor-container {
+  flex: 1;
+
+  min-height: 0;
+
+  background: #0d0f14;
+}
+
+
+/* CONSOLE */
+
+.console {
+  flex: 1;
+
+  padding: 22px;
+
+  overflow: auto;
+
+  background: #0d0f14;
+
+  font-family:
+    "JetBrains Mono",
+    "Fira Code",
+    monospace;
+}
+
+.console-label {
+  margin-bottom: 12px;
+
+  color: #676e7e;
+
+  font-size: 10px;
+
+  letter-spacing: 1px;
+}
+
+.console pre {
+  margin: 0;
+
+  color: #f0f1f5;
+
+  font-size: 14px;
+}
+
+.success-message {
+  margin-top: 18px;
+
+  color: #57c982;
+
+  font-size: 12px;
+}
+
+.empty-console {
+  height: 100%;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  flex-direction: column;
+
+  text-align: center;
+}
+
+.terminal-symbol {
+  margin-bottom: 14px;
+
+  color: #6354d9;
+
+  font-family: monospace;
+
+  font-size: 28px;
+}
+
+.empty-console h3 {
+  margin: 0 0 7px;
+
+  color: #c7cad3;
+
+  font-size: 14px;
+}
+
+.empty-console p {
+  max-width: 260px;
+
+  margin: 0;
+
+  color: #666c7a;
+
+  font-size: 12px;
+
+  line-height: 1.6;
+}
+
+
+/* BOTTOM PANEL */
+
+.bottom-panel {
+  height: 190px;
+
+  background: #0d0f14;
+}
+
+.tabs {
+  height: 43px;
+
+  display: flex;
+  align-items: center;
+
+  padding: 0 15px;
+
+  gap: 4px;
+
+  border-bottom: 1px solid #20232b;
+
+  background: #101218;
+}
+
+.tab {
+  height: 43px;
+
+  padding: 0 13px;
+
+  border: 0;
+
+  background: transparent;
+
+  color: #666d7d;
+
+  font-size: 10px;
+
+  font-weight: 600;
+
+  letter-spacing: 0.7px;
+
+  cursor: pointer;
+
+  border-bottom: 2px solid transparent;
+}
+
+.tab:hover {
+  color: #b5bac6;
+}
+
+.tab.active {
+  color: #d4d7df;
+
+  border-bottom-color: #6c5ce7;
+}
+
+.tab-content {
+  height: calc(100% - 43px);
+
+  padding: 16px 20px;
+
+  overflow: auto;
+}
+
+.tab-placeholder {
+  color: #555c6c;
+
+  font-size: 12px;
+}
+
+
+/* TOKENS */
+
+.token-table {
+  width: 100%;
+
+  font-family: monospace;
+
+  font-size: 12px;
+}
+
+.table-header,
+.table-row {
+  display: grid;
+
+  grid-template-columns: 180px 1fr;
+
+  padding: 7px 10px;
+}
+
+.table-header {
+  color: #656c7c;
+
+  font-size: 9px;
+
+  letter-spacing: 1px;
+
+  border-bottom: 1px solid #20232b;
+}
+
+.table-row {
+  color: #aeb3c0;
+
+  border-bottom: 1px solid #171a21;
+}
+
+.table-row span:first-child {
+  color: #8272ef;
+}
+
+
+/* AST */
+
+.tree {
+  color: #aeb3c0;
+
+  font-family: monospace;
+
+  font-size: 12px;
+
+  line-height: 1.8;
+}
+
+.tree-child {
+  color: #858b9a;
+}
+
+
+/* ENVIRONMENT */
+
+.environment {
+  max-width: 400px;
+}
+
+.env-item {
+  display: flex;
+
+  justify-content: space-between;
+
+  padding: 9px 12px;
+
+  border-bottom: 1px solid #20232b;
+
+  font-family: monospace;
+
+  font-size: 12px;
+}
+
+.env-item span:first-child {
+  color: #8272ef;
+}
+
+.env-item span:last-child {
+  color: #6ccf93;
+}
+
+
+/* ERRORS */
+
+.no-errors {
+  color: #55c985;
+
+  font-size: 12px;
+}
+
+
+/* RESPONSIVE */
+
+@media (max-width: 900px) {
+
+  .workspace {
+    grid-template-columns: 1fr;
+
+    height: auto;
+  }
+
+  .editor-section {
+    height: 500px;
+
+    border-right: 0;
+
+    border-bottom: 1px solid #20232b;
+  }
+
+  .output-section {
+    height: 350px;
+  }
+
+  .bottom-panel {
+    height: 220px;
+  }
+
+  .header-button {
+    display: none;
+  }
+
+}

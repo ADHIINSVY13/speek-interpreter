@@ -1,0 +1,15 @@
+html,
+body,
+#root {
+  width: 100%;
+  min-height: 100%;
+}
+
+html {
+  background: #0b0d12;
+}
+
+body {
+  overflow-x: hidden;
+  margin: 0;
+}
