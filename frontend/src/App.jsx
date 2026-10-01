@@ -31,7 +31,7 @@ function App() {
 
     try {
       const response = await fetch(
-        "http://localhost:8080/api/execute",
+        "https://speek-interpreter-jkme.onrender.com/api/execute",
         {
           method: "POST",
           headers: {
