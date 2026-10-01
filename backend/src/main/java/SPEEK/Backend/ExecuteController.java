@@ -1,8 +1,10 @@
 package SPEEK.Backend;
 
 import SPEEK.interpreter.Interpreter;
+import SPEEK.interpreter.tokenizer.Token;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -25,6 +27,9 @@ public class ExecuteController {
             // Execute program
             String output = interpreter.execute();
 
+            // Get REAL tokens
+            List<Token> tokens = interpreter.getTokens();
+
             // Get REAL environment
             Map<String, Object> environment =
                     interpreter.getEnvironment();
@@ -32,6 +37,7 @@ public class ExecuteController {
             return new ExecutionResponse(
                     output,
                     environment,
+                    tokens,
                     null
             );
 
@@ -40,6 +46,7 @@ public class ExecuteController {
             return new ExecutionResponse(
                     "",
                     Map.of(),
+                    List.of(),
                     e.getMessage()
             );
         }
@@ -50,15 +57,18 @@ public class ExecuteController {
 
         private final String output;
         private final Map<String, Object> environment;
+        private final List<Token> tokens;
         private final String error;
 
         public ExecutionResponse(
                 String output,
                 Map<String, Object> environment,
+                List<Token> tokens,
                 String error
         ) {
             this.output = output;
             this.environment = environment;
+            this.tokens = tokens;
             this.error = error;
         }
 
@@ -68,6 +78,10 @@ public class ExecuteController {
 
         public Map<String, Object> getEnvironment() {
             return environment;
+        }
+
+        public List<Token> getTokens() {
+            return tokens;
         }
 
         public String getError() {

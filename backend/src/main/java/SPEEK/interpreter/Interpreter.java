@@ -13,6 +13,7 @@ public class Interpreter {
 
     private final String sourceCode;
 
+    private List<Token> tokens;
     private List<Instruction> program;
     private Evaluator evaluator;
 
@@ -24,7 +25,8 @@ public class Interpreter {
 
         Tokenizer tokenizer = new Tokenizer(sourceCode);
 
-        List<Token> tokens = tokenizer.tokenize();
+        // Generate and store REAL tokens
+        tokens = tokenizer.tokenize();
 
         Parser parser = new Parser(tokens);
 
@@ -33,6 +35,14 @@ public class Interpreter {
         evaluator = new Evaluator();
 
         return evaluator.executeProgram(program);
+    }
+
+    public List<Token> getTokens() {
+        if (tokens == null) {
+            return List.of();
+        }
+
+        return tokens;
     }
 
     public Map<String, Object> getEnvironment() {
