@@ -3,24 +3,75 @@ package SPEEK.Backend;
 import SPEEK.interpreter.Interpreter;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 @RestController
 @RequestMapping("/api")
 @CrossOrigin(origins = "http://localhost:5173")
 public class ExecuteController {
 
     @PostMapping("/execute")
-    public String execute(@RequestBody String code) {
+    public ExecutionResponse execute(@RequestBody String code) {
 
         try {
+
+            // Normalize Windows line endings
             code = code.replace("\r\n", "\n")
                        .replace("\r", "\n");
 
+            // Create interpreter
             Interpreter interpreter = new Interpreter(code);
 
-            return interpreter.execute();
+            // Execute program
+            String output = interpreter.execute();
+
+            // Get REAL environment
+            Map<String, Object> environment =
+                    interpreter.getEnvironment();
+
+            return new ExecutionResponse(
+                    output,
+                    environment,
+                    null
+            );
 
         } catch (Exception e) {
-            return "Error: " + e.getMessage();
+
+            return new ExecutionResponse(
+                    "",
+                    Map.of(),
+                    e.getMessage()
+            );
+        }
+    }
+
+    // Response object sent to React
+    public static class ExecutionResponse {
+
+        private final String output;
+        private final Map<String, Object> environment;
+        private final String error;
+
+        public ExecutionResponse(
+                String output,
+                Map<String, Object> environment,
+                String error
+        ) {
+            this.output = output;
+            this.environment = environment;
+            this.error = error;
+        }
+
+        public String getOutput() {
+            return output;
+        }
+
+        public Map<String, Object> getEnvironment() {
+            return environment;
+        }
+
+        public String getError() {
+            return error;
         }
     }
 }

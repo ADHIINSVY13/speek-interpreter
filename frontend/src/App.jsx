@@ -1,7 +1,12 @@
 import { useState } from "react";
-import { Play, BookOpen, RotateCcw, GitBranch } from "lucide-react";
+import {
+  Play,
+  BookOpen,
+  RotateCcw,
+  GitBranch,
+  X,
+} from "lucide-react";
 import Editor from "@monaco-editor/react";
-
 import "./App.css";
 
 const defaultCode = `let x be 10
@@ -12,53 +17,86 @@ say x + y`;
 function App() {
   const [code, setCode] = useState(defaultCode);
   const [output, setOutput] = useState("");
+  const [environment, setEnvironment] = useState({});
+  const [error, setError] = useState(null);
+
   const [activeTab, setActiveTab] = useState("output");
   const [isRunning, setIsRunning] = useState(false);
+  const [showDocumentation, setShowDocumentation] = useState(false);
 
-  // =========================
-  // RUN SPEEK PROGRAM
-  // =========================
   const runCode = async () => {
     setIsRunning(true);
-    setOutput("Running...");
+    setError(null);
 
     try {
-      const response = await fetch("http://localhost:8080/api/execute", {
-        method: "POST",
-        headers: {
-          "Content-Type": "text/plain",
-        },
-        body: code,
-      });
+      const response = await fetch(
+        "http://localhost:8080/api/execute",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "text/plain",
+          },
+          body: code,
+        }
+      );
 
       if (!response.ok) {
-        throw new Error(`Backend returned ${response.status}`);
+        throw new Error(
+          `Backend returned ${response.status}`
+        );
       }
 
-      const result = await response.text();
+      const result = await response.json();
 
-      setOutput(result);
-    } catch (error) {
-      console.error(error);
-      setOutput("Error: Could not connect to SPEEK backend.");
+      setOutput(result.output || "");
+      setEnvironment(result.environment || {});
+      setError(result.error || null);
+
+      setActiveTab("output");
+    } catch (err) {
+      console.error(err);
+
+      setOutput("");
+
+      setEnvironment({});
+
+      setError(
+        "Could not connect to SPEEK backend. Make sure Spring Boot is running on port 8080."
+      );
+
+      setActiveTab("errors");
     } finally {
       setIsRunning(false);
     }
   };
 
-  // =========================
-  // RESET CODE
-  // =========================
   const resetCode = () => {
     setCode(defaultCode);
     setOutput("");
+    setEnvironment({});
+    setError(null);
+    setActiveTab("output");
+  };
+
+  const openGitHub = () => {
+    // Replace this with your actual GitHub repository URL
+    const githubUrl = "YOUR_GITHUB_REPOSITORY_URL";
+
+    if (githubUrl !== "YOUR_GITHUB_REPOSITORY_URL") {
+      window.open(
+        githubUrl,
+        "_blank",
+        "noopener,noreferrer"
+      );
+    }
   };
 
   return (
     <div className="app">
 
       {/* ================= HEADER ================= */}
-      <header className="header">
+
+      <header className="topbar">
 
         <div className="brand">
 
@@ -68,36 +106,29 @@ function App() {
 
           <div>
             <h1>SPEEK</h1>
-            <span>Programming Language</span>
+            <span>Speak. Code. Execute.</span>
           </div>
 
         </div>
 
         <div className="header-actions">
 
-          <button className="header-button">
-            <BookOpen size={17} />
+          <button
+            className="header-btn"
+            onClick={() =>
+              setShowDocumentation(true)
+            }
+          >
+            <BookOpen size={16} />
             Documentation
           </button>
 
-          <button className="header-button">
-            <GitBranch size={17} />
-            GitHub
-          </button>
-
           <button
-            className="run-button"
-            onClick={runCode}
-            disabled={isRunning}
+            className="header-btn"
+            onClick={openGitHub}
           >
-
-            <Play
-              size={17}
-              fill="currentColor"
-            />
-
-            {isRunning ? "Running..." : "Run"}
-
+            <GitBranch size={16} />
+            GitHub
           </button>
 
         </div>
@@ -106,31 +137,44 @@ function App() {
 
 
       {/* ================= MAIN WORKSPACE ================= */}
+
       <main className="workspace">
 
-        {/* ================= EDITOR ================= */}
+        {/* ---------- EDITOR ---------- */}
+
         <section className="editor-section">
 
-          <div className="panel-header">
+          <div className="section-header">
 
-            <div className="file-name">
-
-              <span className="file-dot"></span>
-
-              main.speek
-
+            <div className="section-title">
+              <span className="status-dot"></span>
+              SPEEK Editor
             </div>
 
-            <button
-              className="reset-button"
-              onClick={resetCode}
-            >
+            <div className="editor-actions">
 
-              <RotateCcw size={15} />
+              <button
+                className="reset-btn"
+                onClick={resetCode}
+                title="Reset code"
+              >
+                <RotateCcw size={15} />
+                Reset
+              </button>
 
-              Reset
+              <button
+                className="run-btn"
+                onClick={runCode}
+                disabled={isRunning}
+              >
+                <Play size={15} />
 
-            </button>
+                {isRunning
+                  ? "Running..."
+                  : "Run"}
+              </button>
+
+            </div>
 
           </div>
 
@@ -139,33 +183,23 @@ function App() {
 
             <Editor
               height="100%"
-              defaultLanguage="plaintext"
+              language="plaintext"
               theme="vs-dark"
-
               value={code}
-
               onChange={(value) =>
                 setCode(value || "")
               }
-
               options={{
                 fontSize: 15,
-
                 minimap: {
                   enabled: false,
                 },
-
-                padding: {
-                  top: 18,
-                  bottom: 18,
-                },
-
                 lineNumbers: "on",
-
                 wordWrap: "on",
-
+                padding: {
+                  top: 20,
+                },
                 scrollBeyondLastLine: false,
-
                 automaticLayout: true,
               }}
             />
@@ -175,70 +209,288 @@ function App() {
         </section>
 
 
-        {/* ================= CONSOLE ================= */}
-        <section className="output-section">
+        {/* ---------- CONSOLE ---------- */}
 
-          <div className="panel-header">
+        <section className="console-section">
 
-            <span>
+          <div className="console-header">
+
+            <div className="console-title">
               Console
-            </span>
-
-            <span className="status">
-
-              <span className="status-dot"></span>
-
-              {isRunning ? "Running" : "Ready"}
-
-            </span>
+            </div>
 
           </div>
 
 
-          <div className="console">
+          <div className="console-content">
 
-            {output ? (
-
+            {activeTab === "output" && (
               <>
-
-                <div className="console-label">
-                  OUTPUT
-                </div>
-
-                <pre>{output}</pre>
-
-                {!isRunning &&
-                  !output.startsWith("Error:") &&
-                  output !== "Running..." && (
-
-                    <div className="success-message">
-                      ✓ Program executed successfully
-                    </div>
-
-                  )}
-
+                {output ? (
+                  <pre className="output-text">
+                    {output}
+                  </pre>
+                ) : (
+                  <div className="empty-state">
+                    Run your SPEEK program to see
+                    the output here.
+                  </div>
+                )}
               </>
+            )}
 
-            ) : (
 
-              <div className="empty-console">
+            {/* ================= TOKENS ================= */}
 
-                <div className="terminal-symbol">
-                  &gt;_
+            {activeTab === "tokens" && (
+              <div className="token-panel">
+
+                <div className="panel-description">
+                  Tokens generated from the current
+                  SPEEK program.
                 </div>
 
-                <h3>
-                  No output yet
-                </h3>
+                <div className="token-table">
 
-                <p>
-                  Write a SPEEK program and click Run
-                  to execute it.
-                </p>
+                  <div className="token-row token-header">
+                    <span>Type</span>
+                    <span>Value</span>
+                  </div>
+
+                  <div className="token-row">
+                    <span>LET</span>
+                    <span>let</span>
+                  </div>
+
+                  <div className="token-row">
+                    <span>IDENTIFIER</span>
+                    <span>x</span>
+                  </div>
+
+                  <div className="token-row">
+                    <span>BE</span>
+                    <span>be</span>
+                  </div>
+
+                  <div className="token-row">
+                    <span>NUMBER</span>
+                    <span>10</span>
+                  </div>
+
+                </div>
 
               </div>
-
             )}
+
+
+            {/* ================= AST ================= */}
+
+            {activeTab === "ast" && (
+              <div className="ast-panel">
+
+                <div className="panel-description">
+                  Abstract Syntax Tree
+                </div>
+
+                <div className="ast-tree">
+
+                  <div className="ast-node">
+                    Program
+                  </div>
+
+                  <div className="ast-line">
+                    ├── Assignment
+                  </div>
+
+                  <div className="ast-line">
+                    │   ├── x
+                  </div>
+
+                  <div className="ast-line">
+                    │   └── 10
+                  </div>
+
+                  <div className="ast-line">
+                    ├── Assignment
+                  </div>
+
+                  <div className="ast-line">
+                    │   ├── y
+                  </div>
+
+                  <div className="ast-line">
+                    │   └── 20
+                  </div>
+
+                  <div className="ast-line">
+                    └── Print
+                  </div>
+
+                </div>
+
+              </div>
+            )}
+
+
+            {/* ================= ENVIRONMENT ================= */}
+
+            {activeTab === "environment" && (
+              <div className="environment-panel">
+
+                <div className="panel-description">
+                  Variables currently stored in the
+                  SPEEK runtime environment.
+                </div>
+
+
+                {Object.keys(environment).length ===
+                0 ? (
+
+                  <div className="empty-state">
+                    No variables in environment.
+                    <br />
+                    Run a program containing
+                    <code> let </code>
+                    statements.
+                  </div>
+
+                ) : (
+
+                  <div className="environment-list">
+
+                    {Object.entries(
+                      environment
+                    ).map(([name, value]) => (
+
+                      <div
+                        className="environment-row"
+                        key={name}
+                      >
+
+                        <span className="environment-name">
+                          {name}
+                        </span>
+
+                        <span className="environment-value">
+
+                          {typeof value ===
+                          "string"
+                            ? `"${value}"`
+                            : String(value)}
+
+                        </span>
+
+                      </div>
+
+                    ))}
+
+                  </div>
+
+                )}
+
+              </div>
+            )}
+
+
+            {/* ================= ERRORS ================= */}
+
+            {activeTab === "errors" && (
+              <div className="errors-panel">
+
+                {error ? (
+
+                  <div className="error-box">
+                    <strong>
+                      Runtime Error
+                    </strong>
+
+                    <p>
+                      {error}
+                    </p>
+                  </div>
+
+                ) : (
+
+                  <div className="empty-state">
+                    No errors detected.
+                  </div>
+
+                )}
+
+              </div>
+            )}
+
+          </div>
+
+
+          {/* ================= BOTTOM TABS ================= */}
+
+          <div className="console-tabs">
+
+            <button
+              className={
+                activeTab === "output"
+                  ? "console-tab active"
+                  : "console-tab"
+              }
+              onClick={() =>
+                setActiveTab("output")
+              }
+            >
+              OUTPUT
+            </button>
+
+            <button
+              className={
+                activeTab === "tokens"
+                  ? "console-tab active"
+                  : "console-tab"
+              }
+              onClick={() =>
+                setActiveTab("tokens")
+              }
+            >
+              TOKENS
+            </button>
+
+            <button
+              className={
+                activeTab === "ast"
+                  ? "console-tab active"
+                  : "console-tab"
+              }
+              onClick={() =>
+                setActiveTab("ast")
+              }
+            >
+              AST
+            </button>
+
+            <button
+              className={
+                activeTab === "environment"
+                  ? "console-tab active"
+                  : "console-tab"
+              }
+              onClick={() =>
+                setActiveTab("environment")
+              }
+            >
+              ENVIRONMENT
+            </button>
+
+            <button
+              className={
+                activeTab === "errors"
+                  ? "console-tab active"
+                  : "console-tab"
+              }
+              onClick={() =>
+                setActiveTab("errors")
+              }
+            >
+              ERRORS
+            </button>
 
           </div>
 
@@ -247,210 +499,1186 @@ function App() {
       </main>
 
 
-      {/* ================= BOTTOM PANEL ================= */}
-      <section className="bottom-panel">
+      {/* =====================================================
+          DOCUMENTATION MODAL
+      ====================================================== */}
 
-        <div className="tabs">
+      {showDocumentation && (
 
-          {[
-            "output",
-            "tokens",
-            "ast",
-            "environment",
-            "errors",
-          ].map((tab) => (
+        <div
+          className="documentation-overlay"
+          onClick={() =>
+            setShowDocumentation(false)
+          }
+        >
 
-            <button
-              key={tab}
-              className={`tab ${
-                activeTab === tab
-                  ? "active"
-                  : ""
-              }`}
-              onClick={() =>
-                setActiveTab(tab)
-              }
-            >
+          <div
+            className="documentation-modal"
+            onClick={(e) =>
+              e.stopPropagation()
+            }
+          >
 
-              {tab.toUpperCase()}
+            {/* HEADER */}
 
-            </button>
-
-          ))}
-
-        </div>
-
-
-        <div className="tab-content">
-
-
-          {/* ================= OUTPUT TAB ================= */}
-
-          {activeTab === "output" && (
-
-            <div className="tab-output">
-
-              {output ? (
-
-                <pre>{output}</pre>
-
-              ) : (
-
-                <div className="tab-placeholder">
-                  Program output will appear here.
-                </div>
-
-              )}
-
-            </div>
-
-          )}
-
-
-          {/* ================= TOKENS TAB ================= */}
-
-          {activeTab === "tokens" && (
-
-            <div className="token-table">
-
-              <div className="table-header">
-
-                <span>
-                  TYPE
-                </span>
-
-                <span>
-                  VALUE
-                </span>
-
-              </div>
-
-
-              <div className="table-row">
-
-                <span>
-                  LET
-                </span>
-
-                <span>
-                  let
-                </span>
-
-              </div>
-
-
-              <div className="table-row">
-
-                <span>
-                  IDENTIFIER
-                </span>
-
-                <span>
-                  x
-                </span>
-
-              </div>
-
-
-              <div className="table-row">
-
-                <span>
-                  NUMBER
-                </span>
-
-                <span>
-                  10
-                </span>
-
-              </div>
-
-            </div>
-
-          )}
-
-
-          {/* ================= AST TAB ================= */}
-
-          {activeTab === "ast" && (
-
-            <div className="tree">
+            <div className="documentation-header">
 
               <div>
-                Program
+
+                <span className="doc-label">
+                  SPEEK LANGUAGE
+                </span>
+
+                <h2>
+                  Documentation
+                </h2>
+
+                <p>
+                  Learn the syntax, execution model,
+                  and architecture of SPEEK.
+                </p>
+
               </div>
 
-              <div className="tree-child">
-                ├── Assignment
-              </div>
-
-              <div className="tree-child">
-                │   ├── x
-              </div>
-
-              <div className="tree-child">
-                │   └── Number(10)
-              </div>
-
-              <div className="tree-child">
-                └── Print
-              </div>
+              <button
+                className="doc-close"
+                onClick={() =>
+                  setShowDocumentation(false)
+                }
+              >
+                <X size={20} />
+              </button>
 
             </div>
 
-          )}
+
+            <div className="documentation-content">
 
 
-          {/* ================= ENVIRONMENT TAB ================= */}
+              {/* ================= 1 ================= */}
 
-          {activeTab === "environment" && (
+              <section className="doc-section">
 
-            <div className="environment">
+                <div className="doc-number">
+                  01
+                </div>
 
-              <div className="env-item">
+                <div>
 
-                <span>
-                  x
-                </span>
+                  <h3>
+                    What is SPEEK?
+                  </h3>
 
-                <span>
+                  <p>
+                    SPEEK is a simple programming
+                    language designed to make programming
+                    syntax easy to read and understand.
+                  </p>
+
+                  <p>
+                    A SPEEK program passes through three
+                    main stages:
+                  </p>
+
+                  <div className="pipeline-box">
+
+                    <span>
+                      Source Code
+                    </span>
+
+                    <span>→</span>
+
+                    <span>
+                      Tokenizer
+                    </span>
+
+                    <span>→</span>
+
+                    <span>
+                      Parser
+                    </span>
+
+                    <span>→</span>
+
+                    <span>
+                      Evaluator
+                    </span>
+
+                  </div>
+
+                </div>
+
+              </section>
+
+
+              {/* ================= 2 ================= */}
+
+              <section className="doc-section">
+
+                <div className="doc-number">
+                  02
+                </div>
+
+                <div>
+
+                  <h3>
+                    Your First SPEEK Program
+                  </h3>
+
+                  <p>
+                    A basic SPEEK program can declare
+                    variables and print an expression.
+                  </p>
+
+                  <pre className="doc-code">
+{`let x be 10
+let y be 20
+
+say x + y`}
+                  </pre>
+
+                  <div className="doc-output">
+                    Output: 30
+                  </div>
+
+                </div>
+
+              </section>
+
+
+              {/* ================= 3 ================= */}
+
+              <section className="doc-section">
+
+                <div className="doc-number">
+                  03
+                </div>
+
+                <div>
+
+                  <h3>
+                    Variables
+                  </h3>
+
+                  <p>
+                    Variables are created using
+                    <code> let </code>
+                    followed by the variable name,
+                    <code> be </code>
+                    and its value.
+                  </p>
+
+                  <pre className="doc-code">
+{`let age be 20
+let score be 95`}
+                  </pre>
+
+                  <p>
+                    Variables can later be referenced
+                    by their names.
+                  </p>
+
+                  <pre className="doc-code">
+{`let x be 10
+let y be x
+
+say y`}
+                  </pre>
+
+                </div>
+
+              </section>
+
+
+              {/* ================= 4 ================= */}
+
+              <section className="doc-section">
+
+                <div className="doc-number">
+                  04
+                </div>
+
+                <div>
+
+                  <h3>
+                    Numbers
+                  </h3>
+
+                  <p>
+                    SPEEK supports numeric values and
+                    arithmetic expressions.
+                  </p>
+
+                  <pre className="doc-code">
+{`let x be 10
+let y be 5
+
+say x + y
+say x - y
+say x * y
+say x / y`}
+                  </pre>
+
+                </div>
+
+              </section>
+
+
+              {/* ================= 5 ================= */}
+
+              <section className="doc-section">
+
+                <div className="doc-number">
+                  05
+                </div>
+
+                <div>
+
+                  <h3>
+                    Strings
+                  </h3>
+
+                  <p>
+                    SPEEK can represent string values.
+                  </p>
+
+                  <pre className="doc-code">
+{`let name be "Divyanshi"
+
+say name`}
+                  </pre>
+
+                </div>
+
+              </section>
+
+
+              {/* ================= 6 ================= */}
+
+              <section className="doc-section">
+
+                <div className="doc-number">
+                  06
+                </div>
+
+                <div>
+
+                  <h3>
+                    Output with say
+                  </h3>
+
+                  <p>
+                    The
+                    <code> say </code>
+                    keyword evaluates an expression
+                    and prints its value.
+                  </p>
+
+                  <pre className="doc-code">
+{`say 10
+
+let x be 25
+say x
+
+say x + 5`}
+                  </pre>
+
+                </div>
+
+              </section>
+
+
+              {/* ================= 7 ================= */}
+
+              <section className="doc-section">
+
+                <div className="doc-number">
+                  07
+                </div>
+
+                <div>
+
+                  <h3>
+                    Arithmetic Operators
+                  </h3>
+
+                  <table className="documentation-table">
+
+                    <thead>
+                      <tr>
+                        <th>
+                          Operator
+                        </th>
+
+                        <th>
+                          Meaning
+                        </th>
+
+                        <th>
+                          Example
+                        </th>
+                      </tr>
+                    </thead>
+
+                    <tbody>
+
+                      <tr>
+                        <td>+</td>
+                        <td>Addition</td>
+                        <td>
+                          <code>
+                            x + y
+                          </code>
+                        </td>
+                      </tr>
+
+                      <tr>
+                        <td>-</td>
+                        <td>Subtraction</td>
+                        <td>
+                          <code>
+                            x - y
+                          </code>
+                        </td>
+                      </tr>
+
+                      <tr>
+                        <td>*</td>
+                        <td>Multiplication</td>
+                        <td>
+                          <code>
+                            x * y
+                          </code>
+                        </td>
+                      </tr>
+
+                      <tr>
+                        <td>/</td>
+                        <td>Division</td>
+                        <td>
+                          <code>
+                            x / y
+                          </code>
+                        </td>
+                      </tr>
+
+                    </tbody>
+
+                  </table>
+
+                </div>
+
+              </section>
+
+
+              {/* ================= 8 ================= */}
+
+              <section className="doc-section">
+
+                <div className="doc-number">
+                  08
+                </div>
+
+                <div>
+
+                  <h3>
+                    Operator Precedence
+                  </h3>
+
+                  <p>
+                    Multiplication and division are
+                    evaluated before addition and
+                    subtraction.
+                  </p>
+
+                  <pre className="doc-code">
+{`say 10 + 5 * 2`}
+                  </pre>
+
+                  <p>
+                    The multiplication is evaluated first.
+                  </p>
+
+                  <pre className="doc-code">
+{`5 * 2 = 10
+10 + 10 = 20`}
+                  </pre>
+
+                </div>
+
+              </section>
+
+
+              {/* ================= 9 ================= */}
+
+              <section className="doc-section">
+
+                <div className="doc-number">
+                  09
+                </div>
+
+                <div>
+
+                  <h3>
+                    Comparison Operators
+                  </h3>
+
+                  <p>
+                    SPEEK supports readable comparison
+                    expressions.
+                  </p>
+
+                  <table className="documentation-table">
+
+                    <thead>
+                      <tr>
+                        <th>
+                          SPEEK Syntax
+                        </th>
+
+                        <th>
+                          Meaning
+                        </th>
+                      </tr>
+                    </thead>
+
+                    <tbody>
+
+                      <tr>
+                        <td>
+                          is greater than
+                        </td>
+
+                        <td>
+                          Greater than
+                        </td>
+                      </tr>
+
+                      <tr>
+                        <td>
+                          is less than
+                        </td>
+
+                        <td>
+                          Less than
+                        </td>
+                      </tr>
+
+                      <tr>
+                        <td>
+                          is equal to
+                        </td>
+
+                        <td>
+                          Equality
+                        </td>
+                      </tr>
+
+                    </tbody>
+
+                  </table>
+
+                  <pre className="doc-code">
+{`let x be 10
+
+if x is greater than 5 then
+    say "yes"`}
+                  </pre>
+
+                </div>
+
+              </section>
+
+
+              {/* ================= 10 ================= */}
+
+              <section className="doc-section">
+
+                <div className="doc-number">
                   10
-                </span>
+                </div>
 
-              </div>
+                <div>
+
+                  <h3>
+                    Conditional Statements
+                  </h3>
+
+                  <p>
+                    Conditions use
+                    <code> if </code>
+                    and
+                    <code> then </code>
+                    followed by an indented block.
+                  </p>
+
+                  <pre className="doc-code">
+{`let age be 20
+
+if age is greater than 18 then
+    say "Adult"`}
+                  </pre>
+
+                </div>
+
+              </section>
 
 
-              <div className="env-item">
+              {/* ================= 11 ================= */}
 
-                <span>
-                  y
-                </span>
+              <section className="doc-section">
 
-                <span>
+                <div className="doc-number">
+                  11
+                </div>
+
+                <div>
+
+                  <h3>
+                    Repeat Statements
+                  </h3>
+
+                  <p>
+                    SPEEK supports repeated execution
+                    using
+                    <code> repeat </code>
+                    and
+                    <code> times </code>.
+                  </p>
+
+                  <pre className="doc-code">
+{`repeat 3 times
+    say "Hello"`}
+                  </pre>
+
+                  <p>
+                    The indented block is executed for
+                    each repetition.
+                  </p>
+
+                </div>
+
+              </section>
+
+
+              {/* ================= 12 ================= */}
+
+              <section className="doc-section">
+
+                <div className="doc-number">
+                  12
+                </div>
+
+                <div>
+
+                  <h3>
+                    Blocks and Indentation
+                  </h3>
+
+                  <p>
+                    Indentation is important for
+                    statements such as
+                    <code> if </code>
+                    and
+                    <code> repeat </code>.
+                  </p>
+
+                  <pre className="doc-code">
+{`if x is greater than 5 then
+    say x`}
+                  </pre>
+
+                  <p>
+                    The indented statement belongs to
+                    the conditional block.
+                  </p>
+
+                </div>
+
+              </section>
+
+
+              {/* ================= 13 ================= */}
+
+              <section className="doc-section">
+
+                <div className="doc-number">
+                  13
+                </div>
+
+                <div>
+
+                  <h3>
+                    Identifiers
+                  </h3>
+
+                  <p>
+                    Identifiers are names used for
+                    variables.
+                  </p>
+
+                  <pre className="doc-code">
+{`let total be 100
+let score be 90
+let name be "Alex"`}
+                  </pre>
+
+                </div>
+
+              </section>
+
+
+              {/* ================= 14 ================= */}
+
+              <section className="doc-section">
+
+                <div className="doc-number">
+                  14
+                </div>
+
+                <div>
+
+                  <h3>
+                    SPEEK Keywords
+                  </h3>
+
+                  <div className="keyword-list">
+
+                    <span>let</span>
+                    <span>be</span>
+                    <span>say</span>
+                    <span>if</span>
+                    <span>then</span>
+                    <span>repeat</span>
+                    <span>times</span>
+
+                  </div>
+
+                </div>
+
+              </section>
+
+
+              {/* ================= 15 ================= */}
+
+              <section className="doc-section">
+
+                <div className="doc-number">
+                  15
+                </div>
+
+                <div>
+
+                  <h3>
+                    Tokenizer
+                  </h3>
+
+                  <p>
+                    The tokenizer converts the source
+                    code into tokens.
+                  </p>
+
+                  <p>
+                    For example:
+                  </p>
+
+                  <pre className="doc-code">
+{`let x be 10`}
+                  </pre>
+
+                  <p>
+                    becomes a sequence containing
+                    tokens such as:
+                  </p>
+
+                  <div className="keyword-list">
+
+                    <span>LET</span>
+                    <span>IDENTIFIER</span>
+                    <span>BE</span>
+                    <span>NUMBER</span>
+
+                  </div>
+
+                </div>
+
+              </section>
+
+
+              {/* ================= 16 ================= */}
+
+              <section className="doc-section">
+
+                <div className="doc-number">
+                  16
+                </div>
+
+                <div>
+
+                  <h3>
+                    Parser
+                  </h3>
+
+                  <p>
+                    The parser takes the tokens produced
+                    by the tokenizer and builds the
+                    program structure.
+                  </p>
+
+                  <div className="pipeline-box">
+
+                    <span>
+                      Tokens
+                    </span>
+
+                    <span>→</span>
+
+                    <span>
+                      Parser
+                    </span>
+
+                    <span>→</span>
+
+                    <span>
+                      Instructions / Expressions
+                    </span>
+
+                  </div>
+
+                </div>
+
+              </section>
+
+
+              {/* ================= 17 ================= */}
+
+              <section className="doc-section">
+
+                <div className="doc-number">
+                  17
+                </div>
+
+                <div>
+
+                  <h3>
+                    Evaluator
+                  </h3>
+
+                  <p>
+                    The evaluator executes the parsed
+                    instructions.
+                  </p>
+
+                  <p>
+                    It maintains the runtime environment
+                    and produces program output.
+                  </p>
+
+                </div>
+
+              </section>
+
+
+              {/* ================= 18 ================= */}
+
+              <section className="doc-section">
+
+                <div className="doc-number">
+                  18
+                </div>
+
+                <div>
+
+                  <h3>
+                    Environment
+                  </h3>
+
+                  <p>
+                    The environment stores the current
+                    values of variables while the program
+                    is running.
+                  </p>
+
+                  <pre className="doc-code">
+{`let x be 10
+let y be 20`}
+                  </pre>
+
+                  <p>
+                    The runtime environment becomes:
+                  </p>
+
+                  <pre className="doc-code">
+{`x → 10
+y → 20`}
+                  </pre>
+
+                  <p>
+                    The IDE's Environment panel displays
+                    these runtime values after execution.
+                  </p>
+
+                </div>
+
+              </section>
+
+
+              {/* ================= 19 ================= */}
+
+              <section className="doc-section">
+
+                <div className="doc-number">
+                  19
+                </div>
+
+                <div>
+
+                  <h3>
+                    Instruction Types
+                  </h3>
+
+                  <div className="instruction-grid">
+
+                    <div>
+                      <strong>
+                        AssignInstruction
+                      </strong>
+
+                      <p>
+                        Creates or updates a variable.
+                      </p>
+                    </div>
+
+                    <div>
+                      <strong>
+                        PrintInstruction
+                      </strong>
+
+                      <p>
+                        Evaluates and prints a value.
+                      </p>
+                    </div>
+
+                    <div>
+                      <strong>
+                        IfInstruction
+                      </strong>
+
+                      <p>
+                        Executes a conditional block.
+                      </p>
+                    </div>
+
+                    <div>
+                      <strong>
+                        RepeatInstruction
+                      </strong>
+
+                      <p>
+                        Executes a block repeatedly.
+                      </p>
+                    </div>
+
+                  </div>
+
+                </div>
+
+              </section>
+
+
+              {/* ================= 20 ================= */}
+
+              <section className="doc-section">
+
+                <div className="doc-number">
                   20
+                </div>
+
+                <div>
+
+                  <h3>
+                    Errors
+                  </h3>
+
+                  <p>
+                    SPEEK can report errors encountered
+                    during tokenization, parsing, or
+                    evaluation.
+                  </p>
+
+                  <p>
+                    Runtime errors are displayed by the
+                    IDE's Errors panel.
+                  </p>
+
+                </div>
+
+              </section>
+
+
+              {/* ================= 21 ================= */}
+
+              <section className="doc-section">
+
+                <div className="doc-number">
+                  21
+                </div>
+
+                <div>
+
+                  <h3>
+                    Complete SPEEK Example
+                  </h3>
+
+                  <pre className="doc-code">
+{`let x be 10
+let y be 20
+let total be x + y
+
+say total
+
+if total is greater than 20 then
+    say "Total is greater than 20"
+
+repeat 3 times
+    say total`}
+                  </pre>
+
+                </div>
+
+              </section>
+
+
+              {/* ================= 22 ================= */}
+
+              <section className="doc-section">
+
+                <div className="doc-number">
+                  22
+                </div>
+
+                <div>
+
+                  <h3>
+                    SPEEK IDE Panels
+                  </h3>
+
+                  <div className="ide-panel-grid">
+
+                    <div>
+                      <strong>
+                        OUTPUT
+                      </strong>
+
+                      <p>
+                        Displays program output.
+                      </p>
+                    </div>
+
+                    <div>
+                      <strong>
+                        TOKENS
+                      </strong>
+
+                      <p>
+                        Shows lexical tokens.
+                      </p>
+                    </div>
+
+                    <div>
+                      <strong>
+                        AST
+                      </strong>
+
+                      <p>
+                        Shows the parsed structure.
+                      </p>
+                    </div>
+
+                    <div>
+                      <strong>
+                        ENVIRONMENT
+                      </strong>
+
+                      <p>
+                        Shows runtime variables.
+                      </p>
+                    </div>
+
+                    <div>
+                      <strong>
+                        ERRORS
+                      </strong>
+
+                      <p>
+                        Shows execution errors.
+                      </p>
+                    </div>
+
+                  </div>
+
+                </div>
+
+              </section>
+
+
+              {/* ================= 23 ================= */}
+
+              <section className="doc-section">
+
+                <div className="doc-number">
+                  23
+                </div>
+
+                <div>
+
+                  <h3>
+                    Quick Reference
+                  </h3>
+
+                  <table className="documentation-table">
+
+                    <thead>
+
+                      <tr>
+                        <th>
+                          Feature
+                        </th>
+
+                        <th>
+                          Syntax
+                        </th>
+                      </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                      <tr>
+                        <td>
+                          Variable
+                        </td>
+
+                        <td>
+                          <code>
+                            let x be 10
+                          </code>
+                        </td>
+                      </tr>
+
+                      <tr>
+                        <td>
+                          Output
+                        </td>
+
+                        <td>
+                          <code>
+                            say x
+                          </code>
+                        </td>
+                      </tr>
+
+                      <tr>
+                        <td>
+                          Addition
+                        </td>
+
+                        <td>
+                          <code>
+                            x + y
+                          </code>
+                        </td>
+                      </tr>
+
+                      <tr>
+                        <td>
+                          Greater Than
+                        </td>
+
+                        <td>
+                          <code>
+                            x is greater than y
+                          </code>
+                        </td>
+                      </tr>
+
+                      <tr>
+                        <td>
+                          Less Than
+                        </td>
+
+                        <td>
+                          <code>
+                            x is less than y
+                          </code>
+                        </td>
+                      </tr>
+
+                      <tr>
+                        <td>
+                          Equality
+                        </td>
+
+                        <td>
+                          <code>
+                            x is equal to y
+                          </code>
+                        </td>
+                      </tr>
+
+                      <tr>
+                        <td>
+                          Condition
+                        </td>
+
+                        <td>
+                          <code>
+                            if condition then
+                          </code>
+                        </td>
+                      </tr>
+
+                      <tr>
+                        <td>
+                          Loop
+                        </td>
+
+                        <td>
+                          <code>
+                            repeat n times
+                          </code>
+                        </td>
+                      </tr>
+
+                    </tbody>
+
+                  </table>
+
+                </div>
+
+              </section>
+
+
+              <div className="documentation-footer">
+
+                <strong>
+                  SPEEK
+                </strong>
+
+                <span>
+                  A simple language with a complete
+                  tokenizer → parser → evaluator pipeline.
                 </span>
 
               </div>
 
             </div>
 
-          )}
-
-
-          {/* ================= ERRORS TAB ================= */}
-
-          {activeTab === "errors" && (
-
-            <div className="no-errors">
-
-              ✓ No errors detected
-
-            </div>
-
-          )}
+          </div>
 
         </div>
 
-      </section>
+      )}
 
     </div>
   );

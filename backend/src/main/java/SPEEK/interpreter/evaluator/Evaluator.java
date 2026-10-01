@@ -4,7 +4,7 @@ import java.util.List;
 
 public class Evaluator {
 
-    private Environment env;
+    private final Environment env;
 
     public Evaluator() {
         env = new Environment();
@@ -31,7 +31,6 @@ public class Evaluator {
                 } else {
 
                     instr.execute(env);
-
                 }
             }
 
@@ -39,9 +38,12 @@ public class Evaluator {
 
             output.append("Runtime error: ")
                   .append(e.getMessage());
-
         }
 
         return output.toString();
+    }
+
+    public Environment getEnvironment() {
+        return env;
     }
 }
