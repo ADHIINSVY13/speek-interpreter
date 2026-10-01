@@ -9,7 +9,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api")
-@CrossOrigin(origins = "http://localhost:5173")
+@CrossOrigin(origins = "https://speek-interpreter-seven.vercel.app")
 public class ExecuteController {
 
     @PostMapping("/execute")
